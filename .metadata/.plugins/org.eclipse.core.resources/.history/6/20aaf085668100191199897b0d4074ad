@@ -1,0 +1,97 @@
+package comment;
+
+import java.sql.*;
+import java.util.ArrayList;
+
+public class CommentDAO {
+	//private PreparedStatement pstmt;
+	private Connection conn;
+	private ResultSet rs;
+	
+	public CommentDAO() {
+		try {
+			String dbURL = "jdbc:mysql://localhost:3306/BBS?characterEncoding=UTF-8&serverTimezone=UTC";
+			String dbID = "root";
+			String dbPassword = "root";
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(dbURL, dbID, dbPassword);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String getDate() {
+		String SQL = "SELECT NOW()";
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				return rs.getString(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+	
+	public int writeComment(int bbsID, String content, String userID) {
+		String SQL = "INSERT INTO comment VALUES(?, ?, ?, ?)";
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			pstmt.setInt(1, bbsID);
+			pstmt.setString(2, content);
+			pstmt.setString(3, getDate());
+			pstmt.setString(4, userID);
+			
+			return pstmt.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
+	public ArrayList<Comment> getAllComment(int bbsID) {
+		String SQL = "SELECT commentContent, commentDate, userID FROM comment WHERE bbsID=?";
+		ArrayList<Comment> list = new ArrayList<Comment>();
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			pstmt.setInt(1, bbsID);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				Comment comment = new Comment();
+				comment.setCommentContent(rs.getString(1));
+				comment.setCommentDate(rs.getString(2));
+				comment.setUserID(rs.getString(3));
+				comment.setCommentNumber(rs.getInt(1));
+				list.add(comment);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list; //
+	}
+	
+	public Comment getComment(int bbsID) {
+		String SQL = "SELECT * FROM comment WHERE bbsID = ?";
+		Comment comment = new Comment();
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			pstmt.setInt(1, bbsID);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				comment.setBbsID(rs.getInt(1)); //없어도 될듯?
+				comment.setCommentNumber(rs.getInt(2));
+				comment.setCommentContent(rs.getString(3));
+				comment.setCommentDate(rs.getString(4));
+				comment.setUserID(rs.getString(5));
+				
+			}
+			return comment;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+}

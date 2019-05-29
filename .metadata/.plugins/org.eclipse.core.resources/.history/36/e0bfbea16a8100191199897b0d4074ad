@@ -1,0 +1,128 @@
+package comment;
+
+import java.sql.*;
+import java.util.ArrayList;
+
+public class CommentDAO {
+	//private PreparedStatement pstmt;
+	private Connection conn;
+	private ResultSet rs;
+	
+	public CommentDAO() {
+		try {
+			String dbURL = "jdbc:mysql://localhost:3306/BBS?characterEncoding=UTF-8&serverTimezone=UTC";
+			String dbID = "root";
+			String dbPassword = "root";
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(dbURL, dbID, dbPassword);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String getDate() {
+		String SQL = "SELECT NOW()";
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				return rs.getString(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+	
+	public int getCommentNumber() {
+		String SQL = "SELECT commentNumber FROM comment ORDER BY commentNumber DESC";
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt(1)+1;
+			}
+			else {
+				return 1; // 첫 번째 파일인 경우.
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return -1; // 실패한 경우.
+	}
+	
+	public int writeComment(int bbsID, String content, String userID) {
+		String SQL = "INSERT INTO comment VALUES(?, ?, ?, ?, ?)";
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			pstmt.setInt(1, bbsID);
+			pstmt.setInt(2, getCommentNumber());
+			pstmt.setString(3, content);
+			pstmt.setString(4, getDate());
+			pstmt.setString(5, userID);
+			
+			return pstmt.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
+	public ArrayList<Comment> getAllComment(int bbsID) {
+		String SQL = "SELECT commentNumber, commentContent, commentDate, userID FROM comment WHERE bbsID=?";
+		ArrayList<Comment> list = new ArrayList<Comment>();
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			pstmt.setInt(1, bbsID);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				Comment comment = new Comment();
+				comment.setCommentNumber(rs.getInt(1));
+				comment.setCommentContent(rs.getString(2));
+				comment.setCommentDate(rs.getString(3));
+				comment.setUserID(rs.getString(4));
+				list.add(comment);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list; //
+	}
+	
+	public Comment getComment(int bbsID, int commentNumber) {
+		String SQL = "SELECT * FROM comment WHERE bbsID = ? AND commentNumber = ?";
+		Comment comment = new Comment();
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			pstmt.setInt(1, bbsID);
+			pstmt.setInt(2, commentNumber);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				comment.setBbsID(rs.getInt(1)); //없어도 될듯?
+				comment.setCommentNumber(rs.getInt(2));
+				comment.setCommentContent(rs.getString(3));
+				comment.setCommentDate(rs.getString(4));
+				comment.setUserID(rs.getString(5));
+				
+			}
+			return comment;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public int updateComment() {
+		String SQL = "";
+		try {
+			PreparedStatement pstmt = conn.prepareStatement(SQL);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
